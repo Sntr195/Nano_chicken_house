@@ -12,19 +12,20 @@
 #include <Wire.h>                           // Подключаем библиотеку Wire                           
 #include <TimeLib.h>                        // Подключаем библиотеку TimeLib
 #include <DS1307RTC.h>
+#include <avr/pgmspace.h>
 
 
 #define USE_SERIAL  Serial
 #define outputPin  12 
 #define zerocross  5 // for boards with CHANGEBLE input pins
 
-#define startLampHour 22
-#define startLampMinute 23
-#define increaseTime 3
+const byte startLampHour PROGMEM = 20;
+const byte startLampMinute PROGMEM = 4;
+const byte accuracy PROGMEM = 3;
 
-#define stopLampHour 22
-#define stopLampMinute 27
-#define decreaseTime 3
+const byte stopLampHour PROGMEM = 23;
+const byte stopLampMinute PROGMEM = 4;
+
 
 
 dimmerLamp dimmer(outputPin); //initialase port for dimmer for MEGA, Leonardo, UNO, Arduino M0, Arduino Zero
@@ -86,6 +87,8 @@ void setup() {
 
 void loop() 
 {
+  Serial.print("Global power");
+  Serial.print(dimmer.getPower());
 
   if (lampState == 0 && (outVal != 0)){
     dimmer.setPower(0);
@@ -103,22 +106,38 @@ void loop()
     print2digits(minute);
     Serial.write('\n');
 
-    if (hour == startLampHour && (minute>=startLampMinute && (minute <= (startLampMinute + increaseTime)))){
+    if (hour == startLampHour && (minute>=startLampMinute && (minute <= (startLampMinute + accuracy)))){
         Serial.print("lampState = ");
         Serial.println(lampState);
         if (lampState == 0){
           lampState = 1;
           startLamp();
         }
-    }
-
-    if (hour == stopLampHour && (minute>=stopLampMinute && (minute <= (stopLampMinute + decreaseTime)))){
+    } else if (hour == stopLampHour && (minute>=stopLampMinute && (minute <= (stopLampMinute + accuracy)))){
         Serial.print("lampState = ");
         Serial.println(lampState);
         if (lampState == 2){
           lampState = 3;
           stopLamp();
         }
+    }
+
+    //TODO:  Убрать хардкод
+    //резкое выключение после плавного нагрева
+    if ((hour == startLampHour+0 && minute == (startLampMinute+5))&& lampState == 2){
+      outVal = 0;
+      dimmer.setPower(outVal);
+      lampState=0;
+      dimmer.setState(OFF);     
+    }
+    //Резкое влючение перед плавным вечерним выключением
+    if ((hour == stopLampHour-0 && minute == (stopLampMinute-3))&& lampState == 0){
+      dimmer.setState(ON);      
+      Serial.print("STOP OUTPUT VALUE: ");
+      Serial.print(outVal);
+      outVal = 90;
+      dimmer.setPower(outVal);
+      lampState=2;
     }
 
     
@@ -161,10 +180,16 @@ void stopLamp(){
   }
 
   for (int i = 99; i >= 0; i--){
+    
     USE_SERIAL.println(outVal); 
+
+    if (outVal>=0){
     dimmer.setPower(outVal); // name.setPower(0%-100%)
+    } else dimmer.setPower(0);
     outVal = outVal-1;  
     delay(100);
+
+    
   }
   lampState = 0;
   dimmer.setState(OFF);
