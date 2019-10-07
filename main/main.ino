@@ -19,13 +19,14 @@
 #define outputPin  12 
 #define zerocross  5 // for boards with CHANGEBLE input pins
 
-const byte startLampHour PROGMEM = 20;
-const byte startLampMinute PROGMEM = 4;
+const byte startLampHour PROGMEM = 6;
+const byte startLampMinute PROGMEM = 30;
 const byte accuracy PROGMEM = 3;
 
 const byte stopLampHour PROGMEM = 23;
-const byte stopLampMinute PROGMEM = 4;
+const byte stopLampMinute PROGMEM = 10;
 
+int sensorPin = A0;
 
 
 dimmerLamp dimmer(outputPin); //initialase port for dimmer for MEGA, Leonardo, UNO, Arduino M0, Arduino Zero
@@ -87,8 +88,11 @@ void setup() {
 
 void loop() 
 {
-  Serial.print("Global power");
-  Serial.print(dimmer.getPower());
+
+  int sensorValue = analogRead(sensorPin);
+  Serial.print("Sensor data:");
+  Serial.print(sensorValue);
+  Serial.print("\n");
 
   if (lampState == 0 && (outVal != 0)){
     dimmer.setPower(0);
@@ -124,14 +128,14 @@ void loop()
 
     //TODO:  Убрать хардкод
     //резкое выключение после плавного нагрева
-    if ((hour == startLampHour+0 && minute == (startLampMinute+5))&& lampState == 2){
+    if ((hour == startLampHour+1 && minute == (startLampMinute+10))&& lampState == 2){
       outVal = 0;
       dimmer.setPower(outVal);
       lampState=0;
       dimmer.setState(OFF);     
     }
     //Резкое влючение перед плавным вечерним выключением
-    if ((hour == stopLampHour-0 && minute == (stopLampMinute-3))&& lampState == 0){
+    if ((hour == stopLampHour-0 && minute == (stopLampMinute-10))&& lampState == 0){
       dimmer.setState(ON);      
       Serial.print("STOP OUTPUT VALUE: ");
       Serial.print(outVal);
@@ -185,12 +189,19 @@ void stopLamp(){
 
     if (outVal>=0){
     dimmer.setPower(outVal); // name.setPower(0%-100%)
-    } else dimmer.setPower(0);
-    outVal = outVal-1;  
-    delay(100);
+    outVal = outVal-1;
+    } else {
+      dimmer.setPower(0);
+      break;
+    }
+      
+    delay(1000);
 
     
   }
+
+  outVal = 0;
+  dimmer.setPower(outVal);
   lampState = 0;
   dimmer.setState(OFF);
 
