@@ -18,15 +18,18 @@
 #define USE_SERIAL  Serial
 #define outputPin  12 
 #define zerocross  5 // for boards with CHANGEBLE input pins
+#define POT_PIN A1
+#define sensorPin A0
 
 const byte startLampHour PROGMEM = 6;
 const byte startLampMinute PROGMEM = 30;
 const byte accuracy PROGMEM = 3;
 
-const byte stopLampHour PROGMEM = 23;
+const byte stopLampHour PROGMEM = 25;
 const int stopLampMinute PROGMEM = 31;
 
-int sensorPin = A0;
+int level;
+
 
 
 dimmerLamp dimmer(outputPin); //initialase port for dimmer for MEGA, Leonardo, UNO, Arduino M0, Arduino Zero
@@ -137,7 +140,7 @@ Lamp lamp;
 
 void setup() {
 
-
+  pinMode(POT_PIN, INPUT);
   Serial.begin(9600);
   delay(200);
 
@@ -153,6 +156,14 @@ void setup() {
 void loop() 
 {
 
+  
+  level = analogRead(POT_PIN);
+  Serial.print("POT data:");
+  Serial.print(level);
+  Serial.print("\n");
+
+  
+  
   int sensorValue = analogRead(sensorPin);
   Serial.print("Sensor data:");
   Serial.print(sensorValue);
@@ -173,7 +184,7 @@ void loop()
     Serial.write(':');
     print2digits(minute);
     Serial.write('\n');
-
+    
     if (hour == startLampHour && (minute>=startLampMinute && (minute <= (startLampMinute + accuracy)))){
         lamp.startLamp();
     } else if (hour == stopLampHour && (minute>=stopLampMinute && (minute <= (stopLampMinute + accuracy)))){
@@ -188,14 +199,28 @@ void loop()
     }
     //Резкое влючение перед плавным вечерним выключением
     //23:20     23:16  -- h1 59     h1 -59  
-    boolean check = (((stopLampHour - hour <= 1) && (stopLampMinute-minute<=59&&stopLampMinute>=-59))&& lamp.lampState == 0);
-    Serial.print("\n");
-    Serial.print("Check:");
-    Serial.print(check);
-    Serial.print("\n");  
-    if (((stopLampHour - hour <= 1) && (stopLampMinute-minute<=59&&stopLampMinute>=-59))&& lamp.lampState == 0){
-      lamp.on();
-    }
+//    boolean check = (((stopLampHour - hour <= 1) && (stopLampMinute-minute<=59&&stopLampMinute>=-59))&& lamp.lampState == 0);
+//    Serial.print("\n");
+//    Serial.print("Check:");
+//    Serial.print(check);
+//    Serial.print("\n");  
+//    if (((stopLampHour - hour <= 1) && (stopLampMinute-minute<=59&&stopLampMinute>=-59))&& lamp.lampState == 0){
+//      lamp.on();
+//    }
+
+      Serial.print(hour > startLampHour+1 && (hour < stopLampHour));
+      if (hour > startLampHour+1 && (hour < stopLampHour)){
+          //освещенность ниже заданного
+          if (sensorValue>=level){
+            if (lamp.lampState==0){
+              lamp.on();   
+            }
+          } else{
+            if (lamp.lampState==2){
+              lamp.off();   
+            }
+          }
+      }
 
     
     
