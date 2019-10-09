@@ -25,10 +25,11 @@ const byte startLampHour PROGMEM = 6;
 const byte startLampMinute PROGMEM = 30;
 const byte accuracy PROGMEM = 3;
 
-const byte stopLampHour PROGMEM = 25;
-const int stopLampMinute PROGMEM = 31;
+const byte stopLampHour PROGMEM = 23;
+const int stopLampMinute PROGMEM = 15;
 
 int level;
+bool dayEnded = false;
 
 
 
@@ -57,6 +58,7 @@ class Lamp{
             delay(1000);
           }
           lampState = 2;
+          dayEnded = false;
       }
    
   }
@@ -67,6 +69,16 @@ class Lamp{
       Serial.print("STOP OUTPUT VALUE: ");
       Serial.print(outVal);
       outVal = 90;
+      dimmer.setPower(20);
+      delay(300);
+
+      dimmer.setPower(40);
+      delay(300);
+
+      dimmer.setPower(70);
+      delay(300);
+
+      
       dimmer.setPower(outVal);
       lampState=2;
       
@@ -82,7 +94,16 @@ class Lamp{
     }
 
     void stopLamp(){
-      if (lampState==2){
+
+     if (lampState!=2){
+        on();
+        lampState=2; 
+     }
+      
+     if (lampState==2){
+            
+            Serial.print("LAMP STARTED in LAMP CLASS");
+        
             lampState=3;
             if (dimmer.getState() == OFF){
               dimmer.setState(ON);
@@ -96,15 +117,15 @@ class Lamp{
               dimmer.setPower(outVal); // name.setPower(0%-100%)
 //              outVal = outVal-1;
             
-              delay(7000);
+              delay(1000);
             }
       
             outVal = 0;
             dimmer.setPower(outVal);
             lampState = 0;
             dimmer.setState(OFF);
-      
-        
+            dayEnded = true;
+            
           }
     }
   
@@ -174,10 +195,34 @@ void loop()
   }
              
   if (RTC.read(tm)) {
+
+     
+
+
+
+
+    
     Serial.print("Ok, Time = ");
 
     int hour = tm.Hour;
     int minute = tm.Minute; 
+
+
+    if (hour>startLampHour+1){
+        if(hour<stopLampHour||(hour==stopLampHour&&minute<=stopLampMinute)){
+          
+           if (sensorValue>=level){
+            if (lamp.lampState==0){
+              lamp.on();   
+            }
+          } else{
+            if (lamp.lampState==2){
+              lamp.off();   
+            }
+          } 
+          
+        }
+      }
 
     
     print2digits(hour);
@@ -187,7 +232,8 @@ void loop()
     
     if (hour == startLampHour && (minute>=startLampMinute && (minute <= (startLampMinute + accuracy)))){
         lamp.startLamp();
-    } else if (hour == stopLampHour && (minute>=stopLampMinute && (minute <= (stopLampMinute + accuracy)))){
+    } else if (hour == stopLampHour && (minute>=stopLampMinute && (minute <= (stopLampMinute + accuracy))) && !dayEnded  ){
+        Serial.print("LAMP STARTED in LOOP");
         Serial.print("lampState = ");
         Serial.println(lamp.lampState);
         lamp.stopLamp();
@@ -223,21 +269,7 @@ void loop()
 //      }
 
 
-      if (hour>startLampHour+1){
-        if(hour<stopLampHour||(hour==stopLampHour&&minute<=stopLampMinute)){
-          
-           if (sensorValue>=level){
-            if (lamp.lampState==0){
-              lamp.on();   
-            }
-          } else{
-            if (lamp.lampState==2){
-              lamp.off();   
-            }
-          } 
-          
-        }
-      }
+     
 
     
     
