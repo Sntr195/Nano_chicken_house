@@ -194,7 +194,7 @@ void loop()
     }
 
    
-    if ((hour == startLampHour+1 && minute == (startLampMinute+10))&& lamp.lampState == 2){
+    if ((hour == startLampHour+2 && minute == (startLampMinute+10))&& lamp.lampState == 2){
       lamp.off();
     }
     //Резкое влючение перед плавным вечерним выключением
@@ -208,10 +208,25 @@ void loop()
 //      lamp.on();
 //    }
 
-      Serial.print(hour > startLampHour+1 && (hour < stopLampHour));
-      if (hour > startLampHour+1 && (hour < stopLampHour)){
+//      Serial.print(hour > startLampHour+1 && (hour < stopLampHour));
+//      if (hour > startLampHour+1 && (hour < stopLampHour)){
           //освещенность ниже заданного
-          if (sensorValue>=level){
+//          if (sensorValue>=level){
+//            if (lamp.lampState==0){
+//              lamp.on();   
+//            }
+//          } else{
+//            if (lamp.lampState==2){
+//            lamp.off();   
+//           }
+//          }
+//      }
+
+
+      if (hour>startLampHour+1){
+        if(hour<stopLampHour||(hour==stopLampHour&&minute<=stopLampMinute)){
+          
+           if (sensorValue>=level){
             if (lamp.lampState==0){
               lamp.on();   
             }
@@ -219,7 +234,9 @@ void loop()
             if (lamp.lampState==2){
               lamp.off();   
             }
-          }
+          } 
+          
+        }
       }
 
     
