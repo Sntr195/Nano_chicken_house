@@ -25,8 +25,8 @@ const byte startLampHour PROGMEM = 6;
 const byte startLampMinute PROGMEM = 30;
 const byte accuracy PROGMEM = 3;
 
-const byte stopLampHour PROGMEM = 23;
-const int stopLampMinute PROGMEM = 15;
+const byte stopLampHour PROGMEM = 19;
+const int stopLampMinute PROGMEM = 00;
 
 int level;
 bool dayEnded = false;
@@ -55,7 +55,7 @@ class Lamp{
             USE_SERIAL.println(outVal); 
             dimmer.setPower(outVal); // name.setPower(0%-100%)
             outVal = outVal+1;  
-            delay(1000);
+            delay(24000);
           }
           lampState = 2;
           dayEnded = false;
@@ -117,7 +117,7 @@ class Lamp{
               dimmer.setPower(outVal); // name.setPower(0%-100%)
 //              outVal = outVal-1;
             
-              delay(1000);
+              delay(24000);
             }
       
             outVal = 0;
@@ -207,8 +207,12 @@ void loop()
     int hour = tm.Hour;
     int minute = tm.Minute; 
 
+    if(hour==12&&dayEnded==true){
+      dayEnded=false;
+    }
 
-    if (hour>startLampHour+1){
+
+    if (hour>=startLampHour+1){
         if(hour<stopLampHour||(hour==stopLampHour&&minute<=stopLampMinute)){
           
            if (sensorValue>=level){
