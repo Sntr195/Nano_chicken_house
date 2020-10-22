@@ -22,11 +22,11 @@
 #define sensorPin A0
 
 const byte startLampHour PROGMEM = 6;
-const byte startLampMinute PROGMEM = 30;
+const byte startLampMinute PROGMEM = 0;
 const byte accuracy PROGMEM = 3;
 
-const byte stopLampHour PROGMEM = 19;
-const int stopLampMinute PROGMEM = 00;
+const byte stopLampHour PROGMEM = 18;
+const int stopLampMinute PROGMEM = 0;
 
 int level;
 bool dayEnded = false;
@@ -177,19 +177,19 @@ void setup() {
 void loop() 
 {
 
-  
+  // Отображение того, на какое значение установлена крутилка
   level = analogRead(POT_PIN);
   Serial.print("POT data:");
   Serial.print(level);
   Serial.print("\n");
 
   
-  
+  // Отображение значения сенсора света
   int sensorValue = analogRead(sensorPin);
   Serial.print("Sensor data:");
   Serial.print(sensorValue);
   Serial.print("\n");
-
+  
   if (lamp.lampState == 0 && (lamp.outVal != 0)){
     dimmer.setPower(0);
   }
@@ -211,8 +211,8 @@ void loop()
       dayEnded=false;
     }
 
-
-    if (hour>=startLampHour+1){
+    // В этот промежуток времени будет работать управление от датчика света
+    if (hour>=startLampHour+2){
         if(hour<stopLampHour||(hour==stopLampHour&&minute<=stopLampMinute)){
           
            if (sensorValue>=level){
@@ -235,11 +235,14 @@ void loop()
     Serial.write('\n');
     
     if (hour == startLampHour && (minute>=startLampMinute && (minute <= (startLampMinute + accuracy)))){
+        // Если настало утреннее время зажигания - то включить лампу плавно
         lamp.startLamp();
     } else if (hour == stopLampHour && (minute>=stopLampMinute && (minute <= (stopLampMinute + accuracy))) && !dayEnded  ){
+        // Иначе, если настало время выключения 
         Serial.print("LAMP STARTED in LOOP");
         Serial.print("lampState = ");
         Serial.println(lamp.lampState);
+        // ВНИМАНИЕ! СНАЧАЛА ЭТОТ ГОВНОКОД ВКЛЮЧАЕТ ЛАМПУ БЛЯТЬ, ЧТОБЫ ПОТОМ ЕЁ ПЛАВНО ВЫКЛЮЧИТЬ!
         lamp.stopLamp();
     }
 
