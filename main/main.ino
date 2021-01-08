@@ -212,7 +212,7 @@ void loop()
     }
 
     // В этот промежуток времени будет работать управление от датчика света
-    if (hour>=startLampHour+2){
+    if (hour>startLampHour || (hour == startLampHour && minute >= (startLampMinute + 40))){
         if(hour<stopLampHour||(hour==stopLampHour&&minute<=stopLampMinute)){
           
            if (sensorValue>=level){
@@ -242,7 +242,6 @@ void loop()
         Serial.print("LAMP STARTED in LOOP");
         Serial.print("lampState = ");
         Serial.println(lamp.lampState);
-        // ВНИМАНИЕ! СНАЧАЛА ЭТОТ ГОВНОКОД ВКЛЮЧАЕТ ЛАМПУ БЛЯТЬ, ЧТОБЫ ПОТОМ ЕЁ ПЛАВНО ВЫКЛЮЧИТЬ!
         lamp.stopLamp();
     }
 
