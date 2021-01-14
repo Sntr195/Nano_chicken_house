@@ -200,33 +200,41 @@ void loop()
 
 
 
+    Serial.print("LampState = ");
+    Serial.print(lamp.lampState);
+    Serial.print("\n\n");
 
     
     Serial.print("Ok, Time = ");
-
+    
     int hour = tm.Hour;
     int minute = tm.Minute; 
+
+
+    
+    
+
 
     if(hour==12&&dayEnded==true){
       dayEnded=false;
     }
 
     // В этот промежуток времени будет работать управление от датчика света
-    if (hour>startLampHour || (hour == startLampHour && minute >= (startLampMinute + 40))){
-        if(hour<stopLampHour||(hour==stopLampHour&&minute<=stopLampMinute)){
-          
-           if (sensorValue>=level){
-            if (lamp.lampState==0){
-              lamp.on();   
-            }
-          } else{
-            if (lamp.lampState==2){
-              lamp.off();   
-            }
-          } 
-          
-        }
-      }
+//    if (hour>startLampHour || (hour == startLampHour && minute >= (startLampMinute + 40))){
+//        if(hour<stopLampHour||(hour==stopLampHour&&minute<=stopLampMinute)){
+//          
+//           if (sensorValue>=level){
+//            if (lamp.lampState==0){
+//              lamp.on();   
+//            }
+//          } else{
+//            if (lamp.lampState==2){
+//              lamp.off();   
+//            }
+//          } 
+//          
+//        }
+//      }
 
     
     print2digits(hour);
@@ -246,9 +254,16 @@ void loop()
     }
 
    
-    if ((hour == startLampHour+2 && minute == (startLampMinute+10))&& lamp.lampState == 2){
-      lamp.off();
-    }
+//    if ((hour == startLampHour+2 && minute == (startLampMinute+10))&& lamp.lampState == 2){
+//      lamp.off();
+//    }
+
+
+    regulate(hour,minute,lamp.lampState);  
+
+
+
+
     //Резкое влючение перед плавным вечерним выключением
     //23:20     23:16  -- h1 59     h1 -59  
 //    boolean check = (((stopLampHour - hour <= 1) && (stopLampMinute-minute<=59&&stopLampMinute>=-59))&& lamp.lampState == 0);
@@ -288,7 +303,25 @@ void loop()
 
 
 
-
+void regulate(int hour, int minute, byte lampState){
+   Serial.write("REGULATING");
+   Serial.write('\n');
+  //Если заходим в утренний период
+  // если лампа выключена и час сейчас > часа включения, или час сейчас = часу включения, но при этом минуты больше +40 -> включить лампу
+  if (lampState == 0 && (hour > startLampHour || (hour==startLampHour && minute>startLampMinute+39)) && hour < 9){
+    Serial.write("MORNING: LAMP SHOULD BE ON \n");
+    lamp.on();
+  }
+  if (lampState == 2 && (hour>=9 && hour<15)){
+    Serial.write("DAYLIGHT: LAMP SHOULD BE OFF \n");
+    lamp.off();
+  }
+  if (lampState == 0 && (hour>=15 && hour<stopLampHour) ){
+    Serial.write("EVENING: LAMP SHOULD BE ON \n");
+    lamp.on();
+  }
+  
+}
 
 
 
