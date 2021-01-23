@@ -40,7 +40,16 @@ class Lamp{
   byte outVal = 0;
   byte lampState = 0;
   
-
+  void checkLampState(){
+      int power = dimmer.getPower();
+      Serial.print("POWER:");
+      Serial.print(power);
+      Serial.print("\n");
+      if (power==0 && lampState!=0){
+        Serial.print("Lamp state now is 0");
+        lampState = 0;
+      }
+  }
 
   void startLamp(){
 
@@ -210,11 +219,6 @@ void loop()
     int hour = tm.Hour;
     int minute = tm.Minute; 
 
-
-    
-    
-
-
     if(hour==12&&dayEnded==true){
       dayEnded=false;
     }
@@ -308,10 +312,19 @@ void regulate(int hour, int minute, byte lampState){
    Serial.write('\n');
   //Если заходим в утренний период
   // если лампа выключена и час сейчас > часа включения, или час сейчас = часу включения, но при этом минуты больше +40 -> включить лампу
-  if (lampState == 0 && (hour > startLampHour || (hour==startLampHour && minute>startLampMinute+39)) && hour < 9){
-    Serial.write("MORNING: LAMP SHOULD BE ON \n");
-    lamp.on();
+//  if (lampState == 0 && (hour > startLampHour || (hour==startLampHour && minute>startLampMinute+39)) && hour < 9){
+//    Serial.write("MORNING: LAMP SHOULD BE ON \n");
+//    lamp.on();
+//  }
+  if (lampState == 0){
+    if (hour<9){
+      if (hour>startLampHour || (hour==startLampHour && minute>startLampMinute+10)){
+        Serial.write("MORNING: LAMP SHOULD BE ON \n");
+        lamp.on();
+      }
+    }
   }
+  
   if (lampState == 2 && (hour>=9 && hour<15)){
     Serial.write("DAYLIGHT: LAMP SHOULD BE OFF \n");
     lamp.off();
@@ -320,7 +333,7 @@ void regulate(int hour, int minute, byte lampState){
     Serial.write("EVENING: LAMP SHOULD BE ON \n");
     lamp.on();
   }
-  
+  lamp.checkLampState();
 }
 
 
